@@ -4,7 +4,7 @@ import torch
 import numpy as np
 from PIL import Image
 import os
-
+import cv2 as cv
 
 def tensor2im(input_image, imtype=np.uint8):
     """"Converts a Tensor array into a numpy image array.
@@ -101,3 +101,43 @@ def mkdir(path):
     """
     if not os.path.exists(path):
         os.makedirs(path)
+
+
+def get_min_area_rect(image):
+    imgray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+    ret, thresh = cv.threshold(imgray, 10, 255, 0)
+    contours, hierarchy = cv.findContours(thresh, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+    maxContour = max(contours, key = cv.contourArea)
+    rect = cv.minAreaRect(maxContour)
+    return rect
+
+def rotate_image(image, rotation_matrix=None):
+    if rotation_matrix is None:
+        rect = get_min_area_rect(image)
+        center, size, angle = rect
+        rotation_matrix = cv.getRotationMatrix2D(size, angle, 1)
+    rotated_image = cv.warpAffine(image, rotation_matrix, (width,height), flags=cv.INTER_LINEAR)
+    return rotated_image, rotation_matrix 
+
+def crop_image(image, pt=None):
+    if pt is None:
+        rect = get_min_area_rect(image)
+        center, size, angle = rect
+        rect_width, rect_height = size
+        bounding_box = cv.boxPoints(rect)
+        bounding_box = np.int0(bounding_box)
+        src_pts = bounding_box.astype("float32")
+        dst_pts = np.array([[0, height - 1],
+                            [0, 0],
+                            [width - 1, 0],
+                            [width - 1, height - 1]], dtype="float32")
+        pt = cv.getPerspectiveTransform(src_pts, dst_pts)
+    warped = cv.warpPerspective(image, pt, (image.shape[1], image.shape[0]))
+    return warped, pt
+
+def bind_images(raw, target):
+    raw, rotation_matrix = rotate_image(raw)
+    target, _ = rotate_image(target, rotation_matrix)
+    target, pt = crop_image(target)
+    raw, _ = crop_image(raw, pt)
+    return raw, target
