@@ -1,14 +1,14 @@
 accelerate launch train_controlnet.py \
  --pretrained_model_name_or_path="stabilityai/stable-diffusion-2-1-base" \
  --output_dir="model_out" \
- --dataset_name= kornberg/landsat_unfiltered \
+ --dataset_name="kornberg/landsat_unfiltered" \
  --conditioning_image_column=input \
  --image_column=target \
  --caption_column=image_caption \
  --resolution=256 \
  --learning_rate=1e-5 \
  --validation_image "validation_images/1018.jpg" "validation_images/1040.jpg" "validation_images/10151.jpg" \
- --validation_prompt "High-quality close-up dslr photo of man wearing a hat with trees in the background" "Girl smiling, professional dslr photograph, dark background, studio lights, high quality" "Portrait of a clown face, oil on canvas, bittersweet expression" \
+ --validation_prompt "Image of earth from a satellite" "Image of earth from a satellite" "Image of earth from a satellite" \
  --train_batch_size=4 \
  --num_train_epochs=3 \
  --tracker_project_name="controlnet" \
